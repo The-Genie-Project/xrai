@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import itertools
 
-from ..core import evolve
-from ..visualization import plot_fitness_history
-from ..utils.metrics import calculate_fitness_stats
-from ..utils.io import save_experiment_results
+from core import evolve
+from visualization import plot_fitness_history
+from utils.metrics import calculate_fitness_stats
+from utils.io import save_experiment_results
 
 def run_parameter_sweep(
     generations_values=[50, 100, 200],

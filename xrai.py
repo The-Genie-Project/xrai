@@ -11,8 +11,8 @@ warnings.warn(
     stacklevel=2
 )
 
-from .core import chaotic_function, Predictor, MetaPredictor, evolve
-from .visualization import plot_fitness_history
+from core import chaotic_function, Predictor, MetaPredictor, evolve
+from visualization import plot_fitness_history
 
 if __name__ == "__main__":
     # Run the evolutionary process
