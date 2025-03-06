@@ -44,6 +44,35 @@ def print_checkpoint_info(checkpoint, start_generation, population_size, mutatio
     print(f"  - Mutation rate: {mutation_rate}")
     print(f"  - Chaos parameter (r): {r}")
     
+    # Print hierarchy information if available
+    if 'current_hierarchy_level' in checkpoint:
+        current_level = checkpoint.get('current_hierarchy_level', 0)
+        hierarchy_counts = checkpoint.get('hierarchy_generation_counts', [])
+        print(f"  - Current hierarchy level: {current_level + 1}/{len(hierarchy_counts)}")
+        print(f"  - Hierarchy generation distribution: {hierarchy_counts}")
+        
+        # Calculate and print when weights will be updated for each level
+        if hierarchy_counts:
+            print(f"  - Hierarchy level progression:")
+            cumulative_gens = 0
+            for i, gen_count in enumerate(hierarchy_counts):
+                level_start = cumulative_gens
+                level_end = cumulative_gens + gen_count
+                status = "COMPLETED" if i < current_level else "CURRENT" if i == current_level else "PENDING"
+                progress = ""
+                if i == current_level:
+                    current_level_progress = start_generation - level_start
+                    progress = f" (progress: {current_level_progress}/{gen_count} generations, {current_level_progress/gen_count*100:.1f}%)"
+                
+                print(f"    - Level {i+1}: generations {level_start+1}-{level_end} [{status}]{progress}")
+                cumulative_gens += gen_count
+            
+            # Print when the best weights will be updated
+            if current_level < len(hierarchy_counts) - 1:
+                next_update = cumulative_gens = sum(hierarchy_counts[:current_level+1])
+                gens_remaining = next_update - start_generation
+                print(f"  - Next weights update: after generation {next_update} ({gens_remaining} generations remaining)")
+    
     if global_best_predictor:
         print(f"Global best predictor (from generation {global_best_generation}):")
         print(f"  - Fitness: {global_best_fitness:.6f}")
@@ -58,9 +87,16 @@ def print_start_info(population_size, mutation_rate, r, update_interval):
     print(f"  - Update interval: {update_interval}")
     print(f"Press Ctrl+C to stop the evolution")
 
-def print_generation_stats(generation, predictor_fitness, meta_fitness, current_best_fitness, current_best_predictor, global_best_fitness, global_best_predictor, global_best_generation):
+def print_generation_stats(generation, predictor_fitness, meta_fitness, current_best_fitness, current_best_predictor, 
+                          global_best_fitness, global_best_predictor, global_best_generation, 
+                          hierarchy_level=None, total_levels=None):
     """Print statistics for the current generation."""
-    print(f"\nGeneration {generation}:")
+    # Include hierarchy level information if provided
+    hierarchy_info = ""
+    if hierarchy_level is not None and total_levels is not None:
+        hierarchy_info = f" (Hierarchy Level {hierarchy_level}/{total_levels})"
+    
+    print(f"\nGeneration {generation}{hierarchy_info}:")
     print(f"  - Current predictor fitness: {predictor_fitness:.4f}")
     print(f"  - Current meta-predictor fitness: {meta_fitness:.4f}")
     
@@ -73,7 +109,7 @@ def print_generation_stats(generation, predictor_fitness, meta_fitness, current_
     print(f"  - GLOBAL best weights: a={global_best_predictor.weights[0]:.4f}, b={global_best_predictor.weights[1]:.4f}, c={global_best_predictor.weights[2]:.4f}")
     print(f"  - GLOBAL best equation: f(x) = {global_best_predictor.weights[0]:.4f}x² + {global_best_predictor.weights[1]:.4f}x + {global_best_predictor.weights[2]:.4f}")
 
-def update_plots(figures_axes, generation, fitness_history, weight_history, current_best_predictor, global_best_predictor, global_best_fitness, global_best_generation, r):
+def update_plots(figures_axes, generation, fitness_history, weight_history, current_best_predictor, global_best_predictor, global_best_fitness, global_best_generation, r, hierarchy_level=None, total_levels=None):
     """Update all visualization plots."""
     (fig1, ax1), (fig2, ax2), (fig3, ax3), (fig4, ax4), (fig5, ax5) = figures_axes
     
@@ -88,6 +124,11 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
     predictor_fitness_values, meta_fitness_values = zip(*fitness_history) if fitness_history else ([], [])
     generations = np.arange(len(fitness_history))
     
+    # Include hierarchy level information in titles if provided
+    hierarchy_info = ""
+    if hierarchy_level is not None and total_levels is not None:
+        hierarchy_info = f" (Level {hierarchy_level}/{total_levels})"
+    
     # Update fitness plot if figure is still open
     if plt.fignum_exists(fig1.number):
         ax1.clear()
@@ -96,7 +137,7 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
         ax1.axhline(y=global_best_fitness, color='r', linestyle='--', label=f"Global Best ({global_best_fitness:.4f})")
         ax1.set_xlabel("Generation")
         ax1.set_ylabel("Fitness")
-        ax1.set_title(f"Evolution Progress (Generation {generation})")
+        ax1.set_title(f"Evolution Progress - Generation {generation}{hierarchy_info}")
         ax1.legend()
         ax1.grid(True, alpha=0.3)
         fig1.tight_layout()
@@ -125,7 +166,7 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
         
         ax2.set_xlabel("Input (x)")
         ax2.set_ylabel("Output")
-        ax2.set_title(f"Predictor Performance: Current vs Global Best")
+        ax2.set_title(f"Predictor Performance: Current vs Global Best{hierarchy_info}")
         ax2.legend()
         ax2.grid(True, alpha=0.3)
         fig2.tight_layout()
@@ -149,7 +190,7 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
         
         ax3.set_xlabel("Generation")
         ax3.set_ylabel("Weight Value")
-        ax3.set_title(f"Evolution of Best Predictor Weights (Generation {generation})")
+        ax3.set_title(f"Evolution of Best Predictor Weights - Generation {generation}{hierarchy_info}")
         ax3.legend()
         ax3.grid(True, alpha=0.3)
         fig3.tight_layout()
@@ -165,7 +206,7 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
         ax4.plot(generations, fitness_deviation, 'g-', label="Fitness Deviation")
         ax4.set_xlabel("Generation")
         ax4.set_ylabel("Absolute Deviation")
-        ax4.set_title(f"Predictor vs Meta-Predictor Fitness Deviation (Generation {generation})")
+        ax4.set_title(f"Predictor vs Meta-Predictor Fitness Deviation - Generation {generation}{hierarchy_info}")
         
         # Add a moving average for trend visualization
         if len(fitness_deviation) > 10:
@@ -205,7 +246,7 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
         
         ax5.set_xlabel("Input (x)")
         ax5.set_ylabel("Absolute Error")
-        ax5.set_title(f"Error Comparison: Current vs Global Best")
+        ax5.set_title(f"Error Comparison: Current vs Global Best{hierarchy_info}")
         ax5.legend()
         ax5.grid(True, alpha=0.3)
         fig5.tight_layout()
@@ -216,9 +257,15 @@ def update_plots(figures_axes, generation, fitness_history, weight_history, curr
 
 def save_results(results_dir, generation, figures_axes, population_size, mutation_rate, r, 
                 current_best_fitness, current_best_predictor, global_best_fitness, 
-                global_best_predictor, global_best_generation, is_final=False):
+                global_best_predictor, global_best_generation, is_final=False,
+                hierarchy_level=None, total_levels=None):
     """Save results, figures, and checkpoint."""
     suffix = "final" if is_final else f"gen{generation}"
+    
+    # Add hierarchy level to suffix if provided
+    if hierarchy_level is not None and total_levels is not None:
+        suffix += f"_level{hierarchy_level}of{total_levels}"
+    
     (fig1, _), (fig2, _), (fig3, _), (fig4, _), (fig5, _) = figures_axes
     
     # Save figures that are still open
@@ -236,6 +283,11 @@ def save_results(results_dir, generation, figures_axes, population_size, mutatio
     # Save the best weights and parameters to a text file
     with open(os.path.join(results_dir, f"best_weights_{suffix}.txt"), 'w') as f:
         f.write(f"{'Final ' if is_final else ''}Generation: {generation}\n")
+        
+        # Add hierarchy information if provided
+        if hierarchy_level is not None and total_levels is not None:
+            f.write(f"Hierarchy Level: {hierarchy_level}/{total_levels}\n")
+        
         f.write(f"Parameters:\n")
         f.write(f"  - Population size: {population_size}\n")
         f.write(f"  - Mutation rate: {mutation_rate}\n")
@@ -259,9 +311,14 @@ def save_results(results_dir, generation, figures_axes, population_size, mutatio
 
 def save_checkpoint(results_dir, generation, fitness_history, weight_history, predictors, meta_predictors,
                    global_best_predictor, global_best_fitness, global_best_generation,
-                   population_size, mutation_rate, r, is_final=False):
+                   population_size, mutation_rate, r, is_final=False,
+                   current_hierarchy_level=None, hierarchy_generation_counts=None):
     """Save checkpoint for continuing the run later."""
     suffix = "final" if is_final else f"gen{generation}"
+    
+    # Add hierarchy level to suffix if provided
+    if current_hierarchy_level is not None and hierarchy_generation_counts is not None:
+        suffix += f"_level{current_hierarchy_level+1}of{len(hierarchy_generation_counts)}"
     
     checkpoint = {
         'generation': generation,
@@ -279,6 +336,12 @@ def save_checkpoint(results_dir, generation, fitness_history, weight_history, pr
             'r': r
         }
     }
+    
+    # Add hierarchy information if provided
+    if current_hierarchy_level is not None:
+        checkpoint['current_hierarchy_level'] = current_hierarchy_level
+    if hierarchy_generation_counts is not None:
+        checkpoint['hierarchy_generation_counts'] = hierarchy_generation_counts
     
     checkpoint_path = os.path.join(results_dir, f"checkpoint_{suffix}.pkl")
     with open(checkpoint_path, 'wb') as f:
@@ -304,7 +367,10 @@ def save_checkpoint(results_dir, generation, fitness_history, weight_history, pr
         print(f"\nFinal results saved to: {results_dir}")
         print(f"To continue this run later, use: --continue-from {os.path.join(results_dir, 'latest_checkpoint.pkl')}")
     else:
-        print(f"Saved results and checkpoint at generation {generation}")
+        hierarchy_info = ""
+        if current_hierarchy_level is not None and hierarchy_generation_counts is not None:
+            hierarchy_info = f" (Level {current_hierarchy_level+1}/{len(hierarchy_generation_counts)})"
+        print(f"Saved results and checkpoint at generation {generation}{hierarchy_info}")
 
 def cleanup_visualization():
     """Close all matplotlib figures."""

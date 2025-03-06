@@ -346,15 +346,15 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Live Evolution of Predictors and Meta-Predictors")
-    parser.add_argument("--population", type=int, default=20, help="Population size")
-    parser.add_argument("--mutation", type=float, default=0.1, help="Mutation rate")
-    parser.add_argument("--r", type=float, default=3.8, help="Chaos parameter")
-    parser.add_argument("--update", type=int, default=10, help="Update interval (generations)")
-    parser.add_argument("--max-gen", type=int, default=10000, help="Maximum generations")
-    parser.add_argument("--save-interval", type=int, default=100, help="Save interval (generations)")
+    parser.add_argument("--population", type=int, default=20, help="Population size, default 20")
+    parser.add_argument("--mutation", type=float, default=0.1, help="Mutation rate, default 0.1")
+    parser.add_argument("--r", type=float, default=3.8, help="Chaos parameter, default 3.8")
+    parser.add_argument("--update", type=int, default=10, help="Update interval (generations), default 10")
+    parser.add_argument("--max-gen", type=int, default=10000, help="Maximum generations, default 10000")
+    parser.add_argument("--save-interval", type=int, default=100, help="Save interval (generations), default 100")
     parser.add_argument("--continue-from", type=str, help="Path to checkpoint file to continue from")
-    parser.add_argument("--hierarchy-levels", type=int, default=3, help="Number of hierarchical refinement levels")
-    parser.add_argument("--level-scaling", type=float, default=0.5, help="Scaling factor for generations at each level")
+    parser.add_argument("--hierarchy-levels", type=int, default=20, help="Number of hierarchical refinement levels, default 20")
+    parser.add_argument("--level-scaling", type=float, default=0.5, help="Scaling factor for generations at each level, default 0.5")
     
     args = parser.parse_args()
     
