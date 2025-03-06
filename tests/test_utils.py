@@ -3,9 +3,9 @@ import numpy as np
 import os
 import tempfile
 
-from genie.utils.metrics import mean_absolute_error, mean_squared_error, calculate_fitness_stats
-from genie.utils.io import save_model, load_model, save_experiment_results, load_experiment_results
-from genie.core import Predictor, MetaPredictor
+from xrai.utils.metrics import mean_absolute_error, mean_squared_error, calculate_fitness_stats
+from xrai.utils.io import save_model, load_model, save_experiment_results, load_experiment_results
+from xrai.core import Predictor, MetaPredictor
 
 def test_mean_absolute_error():
     """Test mean absolute error calculation."""

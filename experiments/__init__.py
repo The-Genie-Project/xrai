@@ -1,3 +1,3 @@
 """
-Experiment modules for the Genie package.
+Experiment modules for the XRAI package.
 """ 

@@ -1,18 +1,18 @@
 """
-Legacy entry point for the Genie package.
+Legacy entry point for the  package.
 
 This file is kept for backward compatibility. New code should use the package directly.
 """
 import warnings
 
 warnings.warn(
-    "This file is deprecated. Please use the genie package directly.",
+    "This file is deprecated. Please use the  package directly.",
     DeprecationWarning,
     stacklevel=2
 )
 
-from genie.core import chaotic_function, Predictor, MetaPredictor, evolve
-from genie.visualization import plot_fitness_history
+from .core import chaotic_function, Predictor, MetaPredictor, evolve
+from .visualization import plot_fitness_history
 
 if __name__ == "__main__":
     # Run the evolutionary process

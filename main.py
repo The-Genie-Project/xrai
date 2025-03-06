@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Main script for the Genie package.
+Main script for the  package.
 
-This script provides a command-line interface to run experiments with the Genie package.
+This script provides a command-line interface to run experiments with the  package.
 """
 import argparse
 import os
@@ -10,16 +10,16 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from genie.core import evolve, chaotic_function, Predictor
-from genie.visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
-from genie.utils.metrics import calculate_fitness_stats
-from genie.utils.io import save_experiment_results
-from genie.experiments.basic_experiment import run_basic_experiment
-from genie.experiments.parameter_sweep import run_parameter_sweep
+from .core import evolve, chaotic_function, Predictor
+from .visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
+from .utils.metrics import calculate_fitness_stats
+from .utils.io import save_experiment_results
+from .experiments.basic_experiment import run_basic_experiment
+from .experiments.parameter_sweep import run_parameter_sweep
 
 def parse_args():
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Genie: Evolutionary Meta-Learning Framework")
+    parser = argparse.ArgumentParser(description=": Evolutionary Meta-Learning Framework")
     
     # Add subparsers for different commands
     subparsers = parser.add_subparsers(dest="command", help="Command to run")

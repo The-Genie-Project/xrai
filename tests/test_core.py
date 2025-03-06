@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from genie.core import chaotic_function, Predictor, MetaPredictor, evolve
+from xrai.core import chaotic_function, Predictor, MetaPredictor, evolve
 
 def test_chaotic_function():
     """Test the chaotic function."""

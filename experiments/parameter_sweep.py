@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import itertools
 
-from genie.core import evolve
-from genie.visualization import plot_fitness_history
-from genie.utils.metrics import calculate_fitness_stats
-from genie.utils.io import save_experiment_results
+from xraicore import evolve
+from xrai.visualization import plot_fitness_history
+from xrai.utils.metrics import calculate_fitness_stats
+from xrai.utils.io import save_experiment_results
 
 def run_parameter_sweep(
     generations_values=[50, 100, 200],

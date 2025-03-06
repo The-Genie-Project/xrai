@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-from genie.core import evolve
-from genie.visualization import plot_fitness_history, plot_prediction_vs_actual
-from genie.utils.metrics import calculate_fitness_stats
-from genie.utils.io import save_experiment_results
+from xrai.core import evolve
+from xrai.visualization import plot_fitness_history, plot_prediction_vs_actual
+from xrai.utils.metrics import calculate_fitness_stats
+from xrai.utils.io import save_experiment_results
 
 def run_basic_experiment(num_generations=100, population_size=20, mutation_rate=0.1, r=3.8, save_results=True):
     """

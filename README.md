@@ -1,6 +1,6 @@
-# Genie: Evolutionary Meta-Learning Framework
+# : Evolutionary Meta-Learning Framework
 
-Genie is a Python package that simulates an evolutionary algorithm for meta-learning in chaotic environments. It evolves two types of agents:
+ is a Python package that simulates an evolutionary algorithm for meta-learning in chaotic environments. It evolves two types of agents:
 
 1. **Predictors**: Agents that try to predict the output of a chaotic function (logistic map)
 2. **Meta-predictors**: Agents that try to predict how well the predictors will perform
@@ -18,8 +18,8 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```python
-from genie.core import evolve
-from genie.visualization import plot_fitness_history
+from .core import evolve
+from .visualization import plot_fitness_history
 
 # Run the evolutionary process
 fitness_history = evolve(num_generations=100, population_size=20)
@@ -32,15 +32,15 @@ plot_fitness_history(fitness_history)
 
 ```bash
 # Run a basic experiment
-python -m genie.experiments.basic_experiment
+python -m .experiments.basic_experiment
 
 # Run a parameter sweep experiment
-python -m genie.experiments.parameter_sweep
+python -m .experiments.parameter_sweep
 ```
 
 ## Project Structure
 
-- `genie/`: Main package directory
+- `/`: Main package directory
   - `core.py`: Core classes and evolutionary algorithm
   - `visualization.py`: Visualization utilities
   - `experiments/`: Experiment scripts

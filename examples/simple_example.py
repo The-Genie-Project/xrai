@@ -1,11 +1,11 @@
 """
-Simple example of using the Genie package.
+Simple example of using the XRAI package.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
-from genie.core import evolve, chaotic_function, Predictor
-from genie.visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
+from xrai.core import evolve, chaotic_function, Predictor
+from xrai.visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
 
 # Run a simple evolution
 print("Running evolution...")

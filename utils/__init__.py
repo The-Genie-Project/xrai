@@ -1,3 +1,3 @@
 """
-Utility functions for the Genie package.
+Utility functions for the XRAI package.
 """ 

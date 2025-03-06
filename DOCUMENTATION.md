@@ -1,8 +1,8 @@
-# Genie Documentation
+# Documentation
 
 ## Overview
 
-Genie is a Python package that simulates an evolutionary algorithm for meta-learning in chaotic environments. It evolves two types of agents:
+XRAI is a Python package that simulates an evolutionary algorithm for meta-learning in chaotic environments. It evolves two types of agents:
 
 1. **Predictors**: Agents that try to predict the output of a chaotic function (logistic map)
 2. **Meta-predictors**: Agents that try to predict how well the predictors will perform
@@ -13,8 +13,14 @@ This framework demonstrates concepts of meta-learning, evolutionary algorithms, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/genie-project/genie.git
-cd genie
+git clone https://github.com/The-Genie-Project/XRAI.git
+cd XRAI
+
+# Create a python virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+. ./venv/bin/activate
 
 # Install the package
 pip install -e .
