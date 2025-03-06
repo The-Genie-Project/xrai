@@ -1,11 +1,11 @@
-import pytest
+import unittest
 import numpy as np
 import os
 import tempfile
 
-from xrai.utils.metrics import mean_absolute_error, mean_squared_error, calculate_fitness_stats
-from xrai.utils.io import save_model, load_model, save_experiment_results, load_experiment_results
-from xrai.core import Predictor, MetaPredictor
+from ..utils.metrics import mean_absolute_error, mean_squared_error, calculate_fitness_stats
+from ..utils.io import save_model, load_model, save_experiment_results, load_experiment_results
+from ..core import Predictor, MetaPredictor
 
 def test_mean_absolute_error():
     """Test mean absolute error calculation."""

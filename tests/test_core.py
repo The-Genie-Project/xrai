@@ -1,7 +1,7 @@
-import pytest
+import unittest
 import numpy as np
 
-from xrai.core import chaotic_function, Predictor, MetaPredictor, evolve
+from ..core import chaotic_function, Predictor, MetaPredictor, evolve
 
 def test_chaotic_function():
     """Test the chaotic function."""

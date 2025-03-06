@@ -32,7 +32,7 @@ def plot_chaotic_function(r=3.8, iterations=100, initial_x=0.4):
         iterations (int): Number of iterations to plot
         initial_x (float): Initial value
     """
-    from .core import chaotic_function
+    from core import chaotic_function
     
     x_values = np.zeros(iterations)
     x_values[0] = initial_x
@@ -59,7 +59,7 @@ def plot_prediction_vs_actual(predictor, r=3.8, samples=100):
         r (float): Parameter for the chaotic function
         samples (int): Number of samples to plot
     """
-    from .core import chaotic_function
+    from core import chaotic_function
     
     x_values = np.linspace(0, 1, samples)
     actual_values = np.array([chaotic_function(x, r) for x in x_values])
@@ -76,3 +76,4 @@ def plot_prediction_vs_actual(predictor, r=3.8, samples=100):
     plt.tight_layout()
     
     return plt.gcf() 
+

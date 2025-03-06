@@ -10,12 +10,12 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .core import evolve, chaotic_function, Predictor
-from .visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
-from .utils.metrics import calculate_fitness_stats
-from .utils.io import save_experiment_results
-from .experiments.basic_experiment import run_basic_experiment
-from .experiments.parameter_sweep import run_parameter_sweep
+from core import evolve, chaotic_function, Predictor
+from visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
+from utils.metrics import calculate_fitness_stats
+from utils.io import save_experiment_results
+from experiments.basic_experiment import run_basic_experiment
+from experiments.parameter_sweep import run_parameter_sweep
 
 def parse_args():
     """Parse command-line arguments."""

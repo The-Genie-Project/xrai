@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 
-from xrai.visualization import plot_fitness_history, plot_chaotic_function, plot_prediction_vs_actual
-from xrai.core import Predictor
+from ..visualization import plot_fitness_history, plot_chaotic_function, plot_prediction_vs_actual
+from ..core import Predictor
 
 @pytest.fixture
 def sample_fitness_history():

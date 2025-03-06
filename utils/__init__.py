@@ -1,3 +1,3 @@
 """
-Utility functions for the XRAI package.
+Utility functions for the xrai package.
 """ 

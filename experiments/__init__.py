@@ -1,3 +1,3 @@
 """
-Experiment modules for the XRAI package.
+Experiment modules for the xrai package.
 """ 

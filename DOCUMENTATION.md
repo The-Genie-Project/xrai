@@ -13,8 +13,8 @@ This framework demonstrates concepts of meta-learning, evolutionary algorithms, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/The-Genie-Project/XRAI.git
-cd XRAI
+git clone https://github.com/The-Genie-Project/xrai.git
+cd xrai
 
 # Create a python virtual environment
 python -m venv venv
