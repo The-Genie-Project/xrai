@@ -22,18 +22,22 @@ class Predictor:
     
     Attributes:
         weights (numpy.ndarray): Weights for the quadratic prediction model
+        mutation_rate (float): Self-adaptive mutation rate for this predictor
     """
-    def __init__(self, weights=None):
+    def __init__(self, weights=None, mutation_rate=0.1):
         """
         Initialize a predictor with random or specified weights.
         
         Args:
             weights (list or numpy.ndarray, optional): Weights for the prediction model
+            mutation_rate (float, optional): Initial mutation rate for this predictor
         """
         if weights is None:
             self.weights = np.random.uniform(-1, 1, 3)  # Simple 3-weight quadratic model
         else:
             self.weights = np.array(weights)
+        
+        self.mutation_rate = mutation_rate
 
     def predict(self, x):
         """
@@ -47,17 +51,38 @@ class Predictor:
         """
         return np.clip(self.weights[0] * x**2 + self.weights[1] * x + self.weights[2], 0, 1)
 
-    def mutate(self, mutation_rate=0.1):
+    def mutate(self, mutation_rate=None):
         """
         Create a mutated copy of this predictor.
         
         Args:
-            mutation_rate (float): The magnitude of mutation
+            mutation_rate (float, optional): The magnitude of mutation.
+                                            If None, uses the predictor's own mutation_rate.
         
         Returns:
-            Predictor: A new predictor with mutated weights
+            Predictor: A new predictor with mutated weights and possibly mutated mutation rate
         """
-        return Predictor(self.weights + np.random.uniform(-mutation_rate, mutation_rate, 3))
+        # Use provided mutation_rate if given, otherwise use self.mutation_rate
+        mr = mutation_rate if mutation_rate is not None else self.mutation_rate
+        
+        # Create new weights with mutation
+        new_weights = self.weights + np.random.uniform(-mr, mr, 3)
+        
+        # Create a new predictor with the mutated weights
+        # If no external mutation_rate was provided, also mutate the mutation_rate itself
+        if mutation_rate is None:
+            # Mutate the mutation rate itself (meta-mutation)
+            # Use log-normal distribution to ensure mutation_rate stays positive
+            # and changes are symmetric in log-space
+            new_mutation_rate = self.mutation_rate * np.exp(np.random.normal(0, 0.2))
+            
+            # Constrain mutation rate to reasonable bounds
+            new_mutation_rate = np.clip(new_mutation_rate, 0.001, 0.5)
+            
+            return Predictor(new_weights, new_mutation_rate)
+        else:
+            # If external mutation_rate was provided, keep using that
+            return Predictor(new_weights, mr)
 
 # Define a meta-predictor (predicts which agent will perform well)
 class MetaPredictor:
@@ -66,18 +91,22 @@ class MetaPredictor:
     
     Attributes:
         weights (numpy.ndarray): Weights for the quadratic meta-prediction model
+        mutation_rate (float): Self-adaptive mutation rate for this meta-predictor
     """
-    def __init__(self, weights=None):
+    def __init__(self, weights=None, mutation_rate=0.1):
         """
         Initialize a meta-predictor with random or specified weights.
         
         Args:
             weights (list or numpy.ndarray, optional): Weights for the meta-prediction model
+            mutation_rate (float, optional): Initial mutation rate for this meta-predictor
         """
         if weights is None:
             self.weights = np.random.uniform(-1, 1, 3)  # Another 3-weight quadratic model
         else:
             self.weights = np.array(weights)
+        
+        self.mutation_rate = mutation_rate
 
     def predict_fitness(self, predictor, x):
         """
@@ -93,17 +122,38 @@ class MetaPredictor:
         pred_value = predictor.predict(x)
         return np.clip(self.weights[0] * pred_value**2 + self.weights[1] * pred_value + self.weights[2], 0, 1)
 
-    def mutate(self, mutation_rate=0.1):
+    def mutate(self, mutation_rate=None):
         """
         Create a mutated copy of this meta-predictor.
         
         Args:
-            mutation_rate (float): The magnitude of mutation
+            mutation_rate (float, optional): The magnitude of mutation.
+                                            If None, uses the meta-predictor's own mutation_rate.
         
         Returns:
-            MetaPredictor: A new meta-predictor with mutated weights
+            MetaPredictor: A new meta-predictor with mutated weights and possibly mutated mutation rate
         """
-        return MetaPredictor(self.weights + np.random.uniform(-mutation_rate, mutation_rate, 3))
+        # Use provided mutation_rate if given, otherwise use self.mutation_rate
+        mr = mutation_rate if mutation_rate is not None else self.mutation_rate
+        
+        # Create new weights with mutation
+        new_weights = self.weights + np.random.uniform(-mr, mr, 3)
+        
+        # Create a new meta-predictor with the mutated weights
+        # If no external mutation_rate was provided, also mutate the mutation_rate itself
+        if mutation_rate is None:
+            # Mutate the mutation rate itself (meta-mutation)
+            # Use log-normal distribution to ensure mutation_rate stays positive
+            # and changes are symmetric in log-space
+            new_mutation_rate = self.mutation_rate * np.exp(np.random.normal(0, 0.2))
+            
+            # Constrain mutation rate to reasonable bounds
+            new_mutation_rate = np.clip(new_mutation_rate, 0.001, 0.5)
+            
+            return MetaPredictor(new_weights, new_mutation_rate)
+        else:
+            # If external mutation_rate was provided, keep using that
+            return MetaPredictor(new_weights, mr)
 
 # Evolutionary Algorithm
 def evolve(num_generations=100, population_size=20, mutation_rate=0.1, r=3.8):
@@ -113,17 +163,18 @@ def evolve(num_generations=100, population_size=20, mutation_rate=0.1, r=3.8):
     Args:
         num_generations (int): Number of generations to evolve
         population_size (int): Size of the population
-        mutation_rate (float): Rate of mutation for offspring
+        mutation_rate (float): Initial rate of mutation for offspring
         r (float): Parameter for the chaotic function
     
     Returns:
         list: History of fitness values for predictors and meta-predictors
     """
-    # Initialize population of predictors and meta-predictors
-    predictors = [Predictor() for _ in range(population_size)]
-    meta_predictors = [MetaPredictor() for _ in range(population_size)]
+    # Initialize population of predictors and meta-predictors with the initial mutation rate
+    predictors = [Predictor(mutation_rate=mutation_rate) for _ in range(population_size)]
+    meta_predictors = [MetaPredictor(mutation_rate=mutation_rate) for _ in range(population_size)]
 
     fitness_history = []
+    mutation_rate_history = []
 
     for generation in range(num_generations):
         x = np.random.uniform(0, 1)  # Random initial state
@@ -140,11 +191,13 @@ def evolve(num_generations=100, population_size=20, mutation_rate=0.1, r=3.8):
         predictors = [predictors[i] for i in top_indices]
         meta_predictors = [meta_predictors[i] for i in top_indices]
 
-        # Reproduce: Generate new mutated offspring
-        predictors += [p.mutate(mutation_rate) for p in predictors]
-        meta_predictors += [m.mutate(mutation_rate) for m in meta_predictors]
+        # Reproduce: Generate new mutated offspring using their own mutation rates
+        predictors += [p.mutate() for p in predictors]
+        meta_predictors += [m.mutate() for m in meta_predictors]
 
-        # Store best fitness
+        # Store best fitness and average mutation rate
         fitness_history.append((np.max(predictor_fitness), np.max(meta_fitness)))
+        avg_mutation_rate = np.mean([p.mutation_rate for p in predictors])
+        mutation_rate_history.append(avg_mutation_rate)
 
-    return fitness_history, predictors, meta_predictors 
+    return fitness_history, predictors, meta_predictors, mutation_rate_history 

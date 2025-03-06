@@ -31,7 +31,7 @@ def signal_handler(sig, frame):
 # Register the signal handler for SIGINT (Ctrl+C)
 signal.signal(signal.SIGINT, signal_handler)
 
-def live_evolve(population_size=20, mutation_rate=0.1, r=3.8, 
+def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8, 
                 update_interval=10, max_generations=10000, 
                 save_interval=100, continue_from=None,
                 hierarchy_levels=3, level_scaling_factor=0.5):
@@ -40,7 +40,7 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
     
     Args:
         population_size (int): Size of the population
-        mutation_rate (float): Rate of mutation for offspring
+        initial_mutation_rate (float): Initial rate of mutation for offspring
         r (float): Parameter for the chaotic function
         update_interval (int): Number of generations between visual updates
         max_generations (int): Maximum number of generations to run
@@ -56,6 +56,8 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
     start_generation = 0
     fitness_history = []
     weight_history = []
+    mutation_rate_history = []  # Track mutation rates over time
+    chaos_values_history = []   # Track chaotic function values over time
     predictors = None
     meta_predictors = None
     results_dir = None
@@ -94,6 +96,7 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                 predictors = checkpoint.get('predictors', None)
                 meta_predictors = checkpoint.get('meta_predictors', None)
                 results_dir = checkpoint.get('results_dir', None)
+                chaos_values_history = checkpoint.get('chaos_values_history', [])  # Load chaos values history
                 
                 # Load global best predictor information
                 global_best_predictor = checkpoint.get('global_best_predictor', None)
@@ -107,11 +110,11 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                 # Override parameters if they were saved
                 saved_params = checkpoint.get('parameters', {})
                 population_size = saved_params.get('population_size', population_size)
-                mutation_rate = saved_params.get('mutation_rate', mutation_rate)
+                initial_mutation_rate = saved_params.get('mutation_rate', initial_mutation_rate)
                 r = saved_params.get('r', r)
                 
                 visuals.print_checkpoint_info(
-                    checkpoint, start_generation, population_size, mutation_rate, r,
+                    checkpoint, start_generation, population_size, initial_mutation_rate, r,
                     global_best_predictor, global_best_fitness, global_best_generation
                 )
             except Exception as e:
@@ -125,7 +128,7 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
     
     # If not continuing or failed to load, print starting parameters
     if not continue_from:
-        visuals.print_start_info(population_size, mutation_rate, r, update_interval)
+        visuals.print_start_info(population_size, initial_mutation_rate, r, update_interval)
         print(f"Hierarchical evolution with {hierarchy_levels} levels")
         print(f"Generation distribution across levels: {hierarchy_generation_counts}")
     
@@ -140,6 +143,8 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
     if predictors is None or meta_predictors is None:
         predictors = [Predictor() for _ in range(population_size)]
         meta_predictors = [MetaPredictor() for _ in range(population_size)]
+        # Each individual gets its own mutation rate
+        individual_mutation_rates = [initial_mutation_rate for _ in range(population_size)]
     
     # Set up visualization
     figures_axes = visuals.setup_visualization()
@@ -163,6 +168,7 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                 batch_best_predictor = None
                 batch_best_fitness = -float('inf')
                 batch_best_meta = None
+                batch_best_mutation_rate = None
                 
                 for _ in range(update_interval):
                     if terminate_flag:
@@ -170,6 +176,9 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                         
                     x = np.random.uniform(0, 1)  # Random initial state
                     true_value = chaotic_function(x, r)  # The actual outcome
+                    
+                    # Store the chaotic function value
+                    chaos_values_history.append(true_value)
                     
                     # Evaluate predictor fitness
                     predictor_fitness = np.array([1 - abs(p.predict(x) - true_value) for p in predictors])
@@ -186,24 +195,43 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                         batch_best_fitness = current_best_fitness
                         batch_best_predictor = copy.deepcopy(predictors[current_best_idx])
                         batch_best_meta = copy.deepcopy(meta_predictors[current_best_idx])
+                        batch_best_mutation_rate = individual_mutation_rates[current_best_idx]
                     
                     # Check if we have a new global best predictor
                     if current_best_fitness > global_best_fitness:
                         global_best_fitness = current_best_fitness
                         global_best_predictor = copy.deepcopy(predictors[current_best_idx])
                         global_best_generation = generation
+                        global_best_mutation_rate = individual_mutation_rates[current_best_idx]
                     
                     # Selection: Keep the top 50% of predictors and meta-predictors
                     top_indices = np.argsort(predictor_fitness)[-population_size//2:]
                     predictors = [predictors[i] for i in top_indices]
                     meta_predictors = [meta_predictors[i] for i in top_indices]
+                    individual_mutation_rates = [individual_mutation_rates[i] for i in top_indices]
                     
-                    # Reproduce: Generate new mutated offspring
-                    predictors += [p.mutate(mutation_rate) for p in predictors]
-                    meta_predictors += [m.mutate(mutation_rate) for m in meta_predictors]
+                    # Reproduce: Generate new mutated offspring with slightly varied mutation rates
+                    new_predictors = []
+                    new_meta_predictors = []
+                    new_mutation_rates = []
                     
-                    # Store best fitness
+                    for p, m, mr in zip(predictors, meta_predictors, individual_mutation_rates):
+                        # Create offspring with parent's mutation rate
+                        new_predictors.append(p.mutate(mr))
+                        new_meta_predictors.append(m.mutate(mr))
+                        
+                        # Slightly vary the mutation rate for offspring (meta-mutation)
+                        # Ensure it stays within reasonable bounds
+                        new_mr = max(0.001, min(0.5, mr * (1 + np.random.normal(0, 0.1))))
+                        new_mutation_rates.append(new_mr)
+                    
+                    predictors += new_predictors
+                    meta_predictors += new_meta_predictors
+                    individual_mutation_rates += new_mutation_rates
+                    
+                    # Store best fitness and average mutation rate
                     fitness_history.append((np.max(predictor_fitness), np.max(meta_fitness)))
+                    mutation_rate_history.append(np.mean(individual_mutation_rates))
                     
                     generation += 1
                     level_generations += 1
@@ -223,6 +251,15 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                     # Replace the worst predictor with the best from the batch
                     predictors[worst_idx] = copy.deepcopy(batch_best_predictor)
                     meta_predictors[worst_idx] = copy.deepcopy(batch_best_meta)
+                    individual_mutation_rates[worst_idx] = batch_best_mutation_rate
+                    
+                    # Also ensure the global best predictor is always in the population
+                    # by replacing the second worst predictor if needed
+                    if global_best_predictor is not None and len(predictors) > 1:
+                        second_worst_idx = np.argsort(current_fitness)[1]  # Second worst
+                        predictors[second_worst_idx] = copy.deepcopy(global_best_predictor)
+                        # Use the global best mutation rate for this predictor
+                        individual_mutation_rates[second_worst_idx] = global_best_mutation_rate
                 
                 # Get the best predictor in the current population
                 predictor_fitness_values, meta_fitness_values = zip(*fitness_history)
@@ -245,7 +282,11 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                 # Update visualization plots
                 figures_axes = visuals.update_plots(
                     figures_axes, generation, fitness_history, weight_history,
-                    current_best_predictor, global_best_predictor, global_best_fitness, global_best_generation, r
+                    current_best_predictor, global_best_predictor, global_best_fitness, global_best_generation, r,
+                    mutation_rate_history=mutation_rate_history,  # Add mutation rate history
+                    hierarchy_level=current_hierarchy_level+1, 
+                    total_levels=hierarchy_levels,
+                    chaos_values_history=chaos_values_history  # Add chaos values history
                 )
                 
                 # Pause briefly to update the UI and process events
@@ -255,7 +296,7 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                 if generation % save_interval == 0:
                     visuals.save_results(
                         results_dir, generation, figures_axes,
-                        population_size, mutation_rate, r,
+                        population_size, initial_mutation_rate, r,
                         current_best_fitness, current_best_predictor,
                         global_best_fitness, global_best_predictor, global_best_generation
                     )
@@ -264,9 +305,10 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                         results_dir, generation, fitness_history, weight_history,
                         predictors, meta_predictors, global_best_predictor,
                         global_best_fitness, global_best_generation,
-                        population_size, mutation_rate, r,
+                        population_size, initial_mutation_rate, r,
                         current_hierarchy_level=current_hierarchy_level,
-                        hierarchy_generation_counts=hierarchy_generation_counts
+                        hierarchy_generation_counts=hierarchy_generation_counts,
+                        chaos_values_history=chaos_values_history  # Add chaos values history
                     )
             
             # At the end of each hierarchy level, seed the next level with the best solution
@@ -274,12 +316,17 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                 print(f"\n===== Completed Hierarchy Level {current_hierarchy_level + 1}/{hierarchy_levels} =====")
                 print(f"Seeding next level with best solution (fitness: {global_best_fitness:.6f})")
                 
-                # Create a new population centered around the best solution
+                # Use lower mutation rates for higher hierarchy levels to fine-tune
+                level_mutation_rate = initial_mutation_rate / (current_hierarchy_level + 1)
+                
+                # Create new population with varied mutation rates around the best solution
                 new_predictors = []
                 new_meta_predictors = []
+                new_mutation_rates = []
                 
-                # Add the global best predictor
+                # Add the global best predictor with its mutation rate
                 new_predictors.append(copy.deepcopy(global_best_predictor))
+                new_mutation_rates.append(global_best_mutation_rate)
                 
                 # Find the best meta-predictor
                 x_test = np.random.uniform(0, 1)
@@ -289,24 +336,33 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
                                             for m, p, f in zip(meta_predictors, predictors, predictor_fitness_test)])
                 best_meta_idx = np.argmax(meta_fitness_test)
                 best_meta = copy.deepcopy(meta_predictors[best_meta_idx])
+                best_meta_mutation_rate = individual_mutation_rates[best_meta_idx]
                 new_meta_predictors.append(best_meta)
                 
                 # Create variations of the best predictor with different mutation rates
-                # Use lower mutation rates for higher hierarchy levels to fine-tune
-                level_mutation_rate = mutation_rate / (current_hierarchy_level + 1)
-                
                 for _ in range(population_size - 1):
-                    new_predictors.append(global_best_predictor.mutate(level_mutation_rate))
-                    new_meta_predictors.append(best_meta.mutate(level_mutation_rate))
+                    # Create a new predictor with mutation based on level_mutation_rate
+                    new_pred = global_best_predictor.mutate(level_mutation_rate)
+                    new_predictors.append(new_pred)
+                    
+                    # Create a new meta-predictor with mutation based on level_mutation_rate
+                    new_meta = best_meta.mutate(level_mutation_rate)
+                    new_meta_predictors.append(new_meta)
+                    
+                    # Assign a slightly varied mutation rate
+                    new_mr = max(0.001, min(0.5, global_best_mutation_rate * 
+                                          (1 + np.random.normal(0, 0.2))))
+                    new_mutation_rates.append(new_mr)
                 
                 # Replace the population with the new one
                 predictors = new_predictors
                 meta_predictors = new_meta_predictors
+                individual_mutation_rates = new_mutation_rates
                 
                 # Adjust mutation rate for the next level (optional)
-                mutation_rate = max(0.01, mutation_rate * 0.8)  # Reduce mutation rate but keep it above 0.01
+                initial_mutation_rate = max(0.01, initial_mutation_rate * 0.8)  # Reduce mutation rate but keep it above 0.01
                 
-                print(f"Adjusted mutation rate for next level: {mutation_rate:.4f}")
+                print(f"Adjusted mutation rate for next level: {initial_mutation_rate:.4f}")
             
             # Move to the next hierarchy level
             current_hierarchy_level += 1
@@ -321,7 +377,7 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
     
     visuals.save_results(
         results_dir, generation, figures_axes,
-        population_size, mutation_rate, r,
+        population_size, initial_mutation_rate, r,
         current_best_fitness, current_best_predictor,
         global_best_fitness, global_best_predictor, global_best_generation,
         is_final=True
@@ -331,9 +387,10 @@ def live_evolve(population_size=20, mutation_rate=0.1, r=3.8,
         results_dir, generation, fitness_history, weight_history,
         predictors, meta_predictors, global_best_predictor,
         global_best_fitness, global_best_generation,
-        population_size, mutation_rate, r,
+        population_size, initial_mutation_rate, r,
         current_hierarchy_level=current_hierarchy_level,
         hierarchy_generation_counts=hierarchy_generation_counts,
+        chaos_values_history=chaos_values_history,  # Add chaos values history
         is_final=True
     )
     
@@ -361,7 +418,7 @@ if __name__ == "__main__":
     try:
         live_evolve(
             population_size=args.population,
-            mutation_rate=args.mutation,
+            initial_mutation_rate=args.mutation,
             r=args.r,
             update_interval=args.update,
             max_generations=args.max_gen,

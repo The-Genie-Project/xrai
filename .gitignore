@@ -42,3 +42,6 @@ models/
 
 # Environment variables
 .env
+
+# Custom
+idea.md
