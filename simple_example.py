@@ -4,8 +4,8 @@ Simple example of using the xrai package.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..core import evolve, chaotic_function, Predictor
-from ..visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
+from core import evolve, chaotic_function, Predictor
+from visualization import plot_fitness_history, plot_prediction_vs_actual, plot_chaotic_function
 
 # Run a simple evolution
 print("Running evolution...")
