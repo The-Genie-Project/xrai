@@ -1,31 +1,5 @@
 import numpy as np
 
-def mean_absolute_error(y_true, y_pred):
-    """
-    Calculate the mean absolute error between true and predicted values.
-    
-    Args:
-        y_true (array-like): True values
-        y_pred (array-like): Predicted values
-    
-    Returns:
-        float: Mean absolute error
-    """
-    return np.mean(np.abs(np.array(y_true) - np.array(y_pred)))
-
-def mean_squared_error(y_true, y_pred):
-    """
-    Calculate the mean squared error between true and predicted values.
-    
-    Args:
-        y_true (array-like): True values
-        y_pred (array-like): Predicted values
-    
-    Returns:
-        float: Mean squared error
-    """
-    return np.mean((np.array(y_true) - np.array(y_pred))**2)
-
 def calculate_fitness_stats(fitness_history):
     """
     Calculate statistics from fitness history.
