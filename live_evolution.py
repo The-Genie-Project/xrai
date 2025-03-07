@@ -17,7 +17,9 @@ import sys
 
 from core import evolve, chaotic_function, Predictor, MetaPredictor
 from utils.metrics import calculate_fitness_stats
-import visualization_manager as visuals
+import visualization
+
+
 
 # Global flag for clean termination
 terminate_flag = False
@@ -113,7 +115,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
                 initial_mutation_rate = saved_params.get('mutation_rate', initial_mutation_rate)
                 r = saved_params.get('r', r)
                 
-                visuals.print_checkpoint_info(
+                visualization.print_checkpoint_info(
                     checkpoint, start_generation, population_size, initial_mutation_rate, r,
                     global_best_predictor, global_best_fitness, global_best_generation
                 )
@@ -128,7 +130,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
     
     # If not continuing or failed to load, print starting parameters
     if not continue_from:
-        visuals.print_start_info(population_size, initial_mutation_rate, r, update_interval)
+        visualization.print_start_info(population_size, initial_mutation_rate, r, update_interval)
         print(f"Hierarchical evolution with {hierarchy_levels} levels")
         print(f"Generation distribution across levels: {hierarchy_generation_counts}")
     
@@ -147,7 +149,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
         individual_mutation_rates = [initial_mutation_rate for _ in range(population_size)]
     
     # Set up visualization
-    figures_axes = visuals.setup_visualization()
+    figures_axes = visualization.setup_visualization()
     
     # Generation counter
     generation = start_generation
@@ -272,7 +274,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
                 
                 # Calculate and print statistics
                 stats = calculate_fitness_stats(fitness_history)
-                visuals.print_generation_stats(
+                visualization.print_generation_stats(
                     generation, predictor_fitness_values[-1], meta_fitness_values[-1],
                     current_best_fitness, current_best_predictor,
                     global_best_fitness, global_best_predictor, global_best_generation,
@@ -280,7 +282,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
                 )
                 
                 # Update visualization plots
-                figures_axes = visuals.update_plots(
+                figures_axes = visualization.update_plots(
                     figures_axes, generation, fitness_history, weight_history,
                     current_best_predictor, global_best_predictor, global_best_fitness, global_best_generation, r,
                     mutation_rate_history=mutation_rate_history,  # Add mutation rate history
@@ -294,14 +296,14 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
                 
                 # Save results periodically
                 if generation % save_interval == 0:
-                    visuals.save_results(
+                    visualization.save_results(
                         results_dir, generation, figures_axes,
                         population_size, initial_mutation_rate, r,
                         current_best_fitness, current_best_predictor,
                         global_best_fitness, global_best_predictor, global_best_generation
                     )
                     
-                    visuals.save_checkpoint(
+                    visualization.save_checkpoint(
                         results_dir, generation, fitness_history, weight_history,
                         predictors, meta_predictors, global_best_predictor,
                         global_best_fitness, global_best_generation,
@@ -375,7 +377,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
     # Final save
     print("\nSaving final results...")
     
-    visuals.save_results(
+    visualization.save_results(
         results_dir, generation, figures_axes,
         population_size, initial_mutation_rate, r,
         current_best_fitness, current_best_predictor,
@@ -383,7 +385,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
         is_final=True
     )
     
-    visuals.save_checkpoint(
+    visualization.save_checkpoint(
         results_dir, generation, fitness_history, weight_history,
         predictors, meta_predictors, global_best_predictor,
         global_best_fitness, global_best_generation,
@@ -395,7 +397,7 @@ def live_evolve(population_size=20, initial_mutation_rate=0.1, r=3.8,
     )
     
     # Close all remaining figures
-    visuals.cleanup_visualization()
+    visualization.cleanup_visualization()
     
     return fitness_history, predictors, meta_predictors
 
